@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -40,6 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public int humanCount = 0;
     public int computerCount = 0;
     public  int turn = 1;
+    public boolean tie =false;
+    public int roundCount = 1;
 
     HumanPlayer hp = new HumanPlayer('x');
     BotPlayer bp = new BotPlayer('o');
@@ -99,17 +102,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             turn = savedInstanceState.getInt("turn", 1);
             humanCount = savedInstanceState.getInt("humanCount", 0);
             computerCount = savedInstanceState.getInt("computerCount", 0);
+            tie  = savedInstanceState.getBoolean("tie", false);
+            roundCount = savedInstanceState.getInt("roundcount", 1);
 
-            if(result>0){
-                for (int i =0; i<9; i++){
-                    if(gb.getBoard()[i]!='-'){
-                        ButtonList[i].setText(String.valueOf(gb.getBoard()[i]));
-                    }
+            for (int i =0; i<9; i++){
+                if(gb.getBoard()[i]!='-'){
+                    ButtonList[i].setText(String.valueOf(gb.getBoard()[i]));
                 }
             }
 
-            computerTextView.setText("Computer: " + computerCount);
-            humanTextView.setText("Human: " + humanCount);
+            humanTextView.setText("X: " + humanCount);
+            computerTextView.setText("O: " + computerCount);
             if(result>0){
                 for(int i = 0; i< flag.length;i++){
                     ButtonList[flag[i]].setBackgroundColor(Color.RED);
@@ -133,8 +136,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             turn = 1;
             computerCount = 0;
             humanCount = 0;
-            computerTextView.setText("Computer: " + computerCount);
-            humanTextView.setText("Human: " + humanCount);
+            roundCount=0;
+            computerTextView.setText("O: " + computerCount);
+            humanTextView.setText("X: " + humanCount);
             setEnable();
         });
 
@@ -152,31 +156,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             check = false;
             result = 0;
-            turn = 2;
+            turn = 1;
             setEnable();
-            if (bp.getSymbol() == 'x' && gb.isMovesLeft(gb.getBoard())){
-                s = printBoard(gb.getBoard());
-                Log.i("Game Board: \n", s);
+            if (roundCount%2 == 0){
                 botTurn();
-                board = gb.getBoard();
-                flag = gb.checkWin(board,'o');
-
-                board = gb.getBoard();
-                //gb.print(board);
-                check = gb.isMovesLeft(board);
-                for(int i = 0; i< flag.length;i++){
-                    result += flag[i];
-                }
-                if(result > 0){
-                    System.out.println("o win");
-                    for(int i = 0; i< flag.length;i++){
-                        ButtonList[flag[i]].setBackgroundColor(Color.RED);
-                    }
-                    setDisable();
-                    computerCount++;
-                    computerTextView.setText("Computer: " + computerCount);
-                    return;
-                }
+            }else{
+                return;
             }
         });
 
@@ -190,21 +175,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             hp = new HumanPlayer('x');
             bp = new BotPlayer('o');
         }
-
     }
 
-    public void botTurn(){
+    public int botTurn(){
+        int position  = bp.move(gb,bp.getSymbol());
+        gb.getBoard()[position] = bp.getSymbol();
+        ButtonList[position].setText(String.valueOf(bp.getSymbol()));
+        flag = gb.checkWin(gb.getBoard());
         String s =printBoard(gb.getBoard());
         Log.i("Game Board: \n", s);
-        board = gb.getBoard();
-        int position  = bp.move(gb,bp.getSymbol());
-        System.out.println(position);
-        if (position == -1 ){
-            Toast.makeText(getApplicationContext(),"Tie", Toast.LENGTH_SHORT).show();
-        }else{
-            ButtonList[position].setText(String.valueOf(bp.getSymbol()));
-            gb.setBoard(position,bp.getSymbol());}
-
+        for (int i = 0; i<flag.length; i++){
+            result += flag[i];
+        }
+        if(result>0){
+            setButtonColor(flag);
+            setDisable();
+            turn =3;
+            roundCount++;
+            return turn;
+        }
+        result =0;
+        turn = 1;
+        return turn;
     }
 
     public void setDisable(){
@@ -239,176 +231,164 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return s;
     }
 
+    public void setButtonColor(int[] lis){
+        for (int i = 0; i<lis.length; i++){
+            ButtonList[lis[i]].setBackgroundColor(Color.RED);
+        }
+        if (gb.getBoard()[lis[0]] == 'x'){
+            humanCount++;
+            humanTextView.setText("X: "+ humanCount);
+        }else if (gb.getBoard()[lis[0]] == 'o'){
+            computerCount++;
+            computerTextView.setText("o: "+ computerCount);
+        }
+    }
+
+    public int humanMove(int position){
+        if(gb.getBoard()[position] == 'x' || gb.getBoard()[position] == 'o'){
+            Toast.makeText(getApplicationContext(),"This button already set...", Toast.LENGTH_SHORT).show();
+            turn = 1;
+            return turn;
+        }
+        gb.getBoard()[position] = hp.getSymbol();
+        ButtonList[position].setText(String.valueOf(hp.getSymbol()));
+        flag = gb.checkWin(gb.getBoard());
+        String s =printBoard(gb.getBoard());
+        Log.i("Game Board: \n", s);
+        for (int i = 0; i<flag.length; i++){
+            result += flag[i];
+            Log.i("Result: ", String.valueOf(result));
+        }
+        if(result>0){
+            setButtonColor(flag);
+            setDisable();
+            turn =3;
+            roundCount++;
+            return turn;
+        }
+        result =0;
+        turn =2;
+        return turn;
+    }
+
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.leftUpButton:
                 try {
-                    gb.setBoard(0,hp.getSymbol());
-                    leftUpButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(0);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.upMidButton:
                 try {
-                    gb.setBoard(1,hp.getSymbol());
-                    upMidButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(1);
+                        Log.i("BUtton Info: ", "1 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.rightUpButton:
                 try {
-                    gb.setBoard(2,hp.getSymbol());
-                    rightUpButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(2);
+                        Log.i("BUtton Info: ", "2 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.leftMidButton:
                 try {
-                    //human turn
-                    gb.setBoard(3,hp.getSymbol());
-                    leftMidButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(3);
+                        Log.i("BUtton Info: ", "3 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.midButton:
                 try {
-                    //human turn
-                    gb.setBoard(4,hp.getSymbol());
-                    midButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(4);
+                        Log.i("BUtton Info: ", "4 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.rightMidButton:
                 try {
-                    //human turn
-                    gb.setBoard(5,hp.getSymbol());
-                    rightMidButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(5);
+                        Log.i("BUtton Info: ", "5 clicked");
+                    };
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.leftLowButton:
                 try {
-                    //human turn
-                    gb.setBoard(6,hp.getSymbol());
-                    leftLowButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(6);
+                        Log.i("BUtton Info: ", "6 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.lowMidButton:
                 try {
-                    //human turn
-                    gb.setBoard(7,hp.getSymbol());
-                    lowMidButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(7);
+                        Log.i("BUtton Info: ", "7 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.rightLowButton:
                 try {
-                    //human turn
-                    gb.setBoard(8,hp.getSymbol());
-                    rightLowButton.setText(String.valueOf(hp.getSymbol()));
-                    board = gb.getBoard();
-                    flag = gb.checkWin(board,hp.getSymbol());
-                    turn =2;
-                    String s =printBoard(gb.getBoard());
-                    Log.i("Game Board: \n", s);
+                    //todo...
+                    while (turn == 1){
+                        humanMove(8);
+                        Log.i("BUtton Info: ", "8 clicked");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
         }
-
-
-        board = gb.getBoard();
-        //gb.print(board);
-        check = gb.isMovesLeft(board);
-        flag = gb.checkWin(board,hp.getSymbol());
-        for(int i = 0; i< flag.length;i++){
-            result += flag[i];
-        }
-        if(result > 0){
-            System.out.println("x win");
-            String s =printBoard(gb.getBoard());
-            Log.i("Game Board: \n", s);
-            for(int i = 0; i< flag.length;i++){
-                ButtonList[flag[i]].setBackgroundColor(Color.RED);
-            }
-            humanCount++;
+        tie = gb.checkTie(gb.getBoard());
+        if (tie){
+            Toast.makeText(getApplicationContext(),"Tie.", Toast.LENGTH_SHORT).show();
             setDisable();
-            humanTextView.setText("Human: " + humanCount);
+            roundCount++;
             return;
         }
-        if(turn == 2 && gb.isMovesLeft(gb.getBoard())){
-            botTurn();
-            String s =printBoard(gb.getBoard());
-            Log.i("Game Board: \n", s);
-            board = gb.getBoard();
-            flag = gb.checkWin(board,bp.getSymbol());
 
-            board = gb.getBoard();
-            //gb.print(board);
-            check = gb.isMovesLeft(board);
-            for(int i = 0; i< flag.length;i++){
-                result += flag[i];
-            }
-            if(result > 0){
-                System.out.println("o win");
-                for(int i = 0; i< flag.length;i++){
-                    ButtonList[flag[i]].setBackgroundColor(Color.RED);
-                }
-                setDisable();
-                computerCount++;
-                computerTextView.setText("Computer: " + computerCount);
-                return;
-            }
+        while(turn == 2){
+            botTurn();
+        }
+        tie = gb.checkTie(gb.getBoard());
+        if (tie){
+            Toast.makeText(getApplicationContext(),"Tie.", Toast.LENGTH_SHORT).show();
+            setDisable();
+            roundCount++;
+            return;
         }
     }
 
@@ -426,6 +406,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         savedInstanceState.putChar("7", gb.getBoard()[7]);
         savedInstanceState.putChar("8", gb.getBoard()[8]);
         savedInstanceState.putBoolean("Check", check);
+        savedInstanceState.putBoolean("tie", tie);
+        savedInstanceState.putInt("roundcount", roundCount);
         savedInstanceState.putInt("result", result);
         savedInstanceState.putInt("turn", turn);
         savedInstanceState.putInt("humanCount", humanCount);

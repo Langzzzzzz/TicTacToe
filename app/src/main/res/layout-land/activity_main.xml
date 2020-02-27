@@ -18,7 +18,7 @@
                 android:id="@+id/text_view_p1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Human : 0"
+                android:text="X : 0"
                 android:textSize="30sp" />
 
             <TextView
@@ -26,7 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/text_view_p1"
-                android:text="Computer : 0"
+                android:text="O : 0"
                 android:textSize="30sp" />
         </LinearLayout>
         <LinearLayout

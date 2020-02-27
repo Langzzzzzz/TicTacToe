@@ -33,53 +33,68 @@ public class GameBoard {
         board[x] = symbol;
     }
 
+    public boolean checkTie(char[] b){
+        if (isMovesLeft(b)){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
     public int[] checkWin(char[] b){
         int[] temp = new int[3];
         temp[0] = -1;
         temp[1] = -1;
         temp[2] = -1;
-        if (b[0] == b[1] && b[1] == b[2]) {
+        if (b[0] == b[1] && b[1] == b[2] && b[0]!='-') {
             temp[0] = 0;
             temp[1] = 1;
             temp[2] = 2;
+            return temp;
         }
-        else if (b[3] == b[4] && b[4] == b[5]){
+        else if (b[3] == b[4] && b[4] == b[5] && b[3]!='-'){
             temp[0] = 3;
             temp[1] = 4;
             temp[2] = 5;
+            return temp;
         }
-        else if (b[6] == b[7] && b[7] == b[8]){
+        else if (b[6] == b[7] && b[7] == b[8] && b[7]!='-'){
             temp[0] = 6;
             temp[1] = 7;
             temp[2] = 8;
+            return temp;
         }
-        else if (b[0] == b[3] && b[3] == b[6]) {
+        else if (b[0] == b[3] && b[3] == b[6] && b[3]!='-' ) {
             temp[0] = 0;
             temp[1] = 3;
             temp[2] = 6;
+            return temp;
         }
-        else if (b[1] == b[4] && b[4] == b[7]){
+        else if (b[1] == b[4] && b[4] == b[7] && b[4]!='-'){
             temp[0] = 1;
             temp[1] = 4;
             temp[2] = 7;
+            return temp;
         }
-        else if (b[2] == b[5] && b[5] == b[8]){
+        else if (b[2] == b[5] && b[5] == b[8] && b[5]!='-'){
             temp[0] = 2;
             temp[1] = 5;
             temp[2] = 8;
+            return temp;
         }
-        else if (b[0] == b[4] && b[4] == b[8]){
+        else if (b[0] == b[4] && b[4] == b[8] && b[4]!='-'){
             temp[0] = 0;
             temp[1] = 4;
             temp[2] = 8;
+            return temp;
         }
-        else if (b[2] == b[4] && b[4] == b[6]){
+        else if (b[2] == b[4] && b[4] == b[6] && b[4]!='-'){
             temp[0] = 2;
             temp[1] = 4;
             temp[2] = 6;
+            return temp;
         } else {
             return temp;
-        };
-        return temp;
+        }
     }
 }
